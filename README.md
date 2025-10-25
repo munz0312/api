@@ -35,12 +35,12 @@ sudo k3s ctr images import api.tar
 sudo k3s ctr images ls | grep api
 
 # Create database initialization ConfigMap
+kubectl apply -f deployment/db/db-namespace.yaml
 kubectl create configmap init-sql \
   --from-file=init.sql=./docker/init.sql \
   -n db-namespace
 
 # Deploy database resources
-kubectl apply -f deployment/db/db-namespace.yaml
 kubectl apply -f deployment/db/db-deployment.yaml -n db-namespace
 kubectl apply -f deployment/db/db-service.yaml -n db-namespace
 
@@ -55,9 +55,9 @@ kubectl exec -it $(kubectl get pod -l app=postgres -n db-namespace -o jsonpath='
 kubectl get service postgres-service -n db-namespace
 
 # Update deployment/app/app-deployment.yaml with the CLUSTER-IP:
-# env:
-#   - name: DATABASE_URL
-#     value: postgresql://postgres:admin123@<CLUSTER-IP>:5432/info_db
+env:
+  - name: DATABASE_URL
+    value: postgresql://postgres:admin123@<CLUSTER-IP>:5432/info_db
 
 # Deploy application resources
 kubectl apply -f deployment/app/app-namespace.yaml
@@ -71,9 +71,12 @@ kubectl get pods -n app-namespace -w
 kubectl logs -l app=rust-app -n app-namespace
 ```
 # Local Access
+```
 curl http://localhost:30000
-
+```
 # Network Access (other machines)
 Get your machine's network IP
+```
 ip route get 1.2.3.4 | awk '{print $7}' | head -n1
-http://<MACHINE_IP>:30000
+curl http://<MACHINE_IP>:30000
+```
