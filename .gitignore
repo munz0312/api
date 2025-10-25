@@ -1,1 +1,10 @@
 /target
+conf/secrets.env
+*.env
+.env
+.env.*
+docker/postgres-data/
+**/data/
+**/volumes/
+api.tar
+*.tar

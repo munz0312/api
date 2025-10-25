@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: info_db
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  rust_app:
+    image: api:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:admin123@postgres:5432/info_db
+    depends_on:
+      - postgres
+
