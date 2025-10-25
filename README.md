@@ -1,5 +1,7 @@
 # Install Docker, k3s, and kubectl
+```
 sudo pacman -S docker k3s kubectl
+
 
 # Add your user to the docker group
 sudo usermod -aG docker $USER
@@ -67,7 +69,7 @@ kubectl get pods -n app-namespace -w
 
 # Check application logs
 kubectl logs -l app=rust-app -n app-namespace
-
+```
 # Local Access
 curl http://localhost:30000
 
