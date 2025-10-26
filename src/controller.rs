@@ -1,6 +1,7 @@
 use axum::{Extension, Json, extract::Path, http::StatusCode};
 
 use crate::{
+    auth::Claims,
     model::{User, UserInfo},
     user_service::UserService,
 };
@@ -30,9 +31,15 @@ pub async fn get_user_by_id(
 
 pub async fn update_user(
     service: Extension<UserService>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<i32>,
     Json(user): Json<UserInfo>,
 ) -> StatusCode {
+    // Verify the authenticated user is updating their own account
+    if claims.sub.parse::<i32>().unwrap() != id {
+        return StatusCode::FORBIDDEN;
+    }
+
     match service.update_user(id, user).await {
         Ok(_) => StatusCode::OK,
         Err(e) => {
@@ -42,7 +49,16 @@ pub async fn update_user(
     }
 }
 
-pub async fn delete_user(service: Extension<UserService>, Path(id): Path<i32>) -> StatusCode {
+pub async fn delete_user(
+    service: Extension<UserService>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<i32>,
+) -> StatusCode {
+    // Verify the authenticated user is deleting their own account
+    if claims.sub.parse::<i32>().unwrap() != id {
+        return StatusCode::FORBIDDEN;
+    }
+
     match service.delete_user(id).await {
         Ok(_) => StatusCode::NO_CONTENT,
         Err(e) => {
