@@ -3,6 +3,7 @@ conf/secrets.env
 *.env
 .env
 .env.*
+!.env.example
 docker/postgres-data/
 **/data/
 **/volumes/

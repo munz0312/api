@@ -1,5 +1,4 @@
 use crate::model::{User, UserInfo};
-use dotenv::dotenv;
 use sqlx::PgPool;
 use sqlx::error::Error;
 use sqlx::postgres::PgPoolOptions;
@@ -12,7 +11,7 @@ pub struct UserService {
 
 impl UserService {
     pub async fn new() -> Result<Self, Error> {
-        dotenv().ok();
+        dotenv::from_path("conf/secrets.env").ok();
         let url = env::var("DATABASE_URL").unwrap();
         let pool = PgPoolOptions::new()
             .max_connections(5)
@@ -22,7 +21,7 @@ impl UserService {
     }
 
     pub async fn list_users(&self) -> Result<Vec<User>, Error> {
-        let users = sqlx::query_as::<_, User>("SELECT id, name, occupation FROM users")
+        let users = sqlx::query_as::<_, User>("SELECT id, email, password_hash, name, occupation, created_at FROM users")
             .fetch_all(&self.pool)
             .await?;
         Ok(users)
@@ -30,20 +29,11 @@ impl UserService {
 
     pub async fn get_users_by_id(&self, id: i32) -> Result<User, Error> {
         let user =
-            sqlx::query_as::<_, User>("SELECT id, name, occupation FROM users WHERE id = $1")
+            sqlx::query_as::<_, User>("SELECT id, email, password_hash, name, occupation, created_at FROM users WHERE id = $1")
                 .bind(id)
                 .fetch_one(&self.pool)
                 .await?;
         Ok(user)
-    }
-
-    pub async fn create_user(&self, user: UserInfo) -> Result<(), Error> {
-        sqlx::query("INSERT INTO USERS (name, occupation) VALUES ($1, $2)")
-            .bind(user.name)
-            .bind(user.occupation)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
     }
 
     pub async fn update_user(&self, id: i32, user: UserInfo) -> Result<(), Error> {
@@ -62,5 +52,34 @@ impl UserService {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    pub async fn create_user_with_auth(
+        &self,
+        email: String,
+        password_hash: String,
+        name: String,
+        occupation: String,
+    ) -> Result<User, Error> {
+        let user = sqlx::query_as::<_, User>(
+            "INSERT INTO users (email, password_hash, name, occupation) VALUES ($1, $2, $3, $4) RETURNING id, email, password_hash, name, occupation, created_at"
+        )
+        .bind(email)
+        .bind(password_hash)
+        .bind(name)
+        .bind(occupation)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(user)
+    }
+
+    pub async fn get_user_by_email(&self, email: &str) -> Result<User, Error> {
+        let user = sqlx::query_as::<_, User>(
+            "SELECT id, email, password_hash, name, occupation, created_at FROM users WHERE email = $1"
+        )
+        .bind(email)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(user)
     }
 }

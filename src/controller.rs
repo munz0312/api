@@ -1,5 +1,4 @@
 use axum::{Extension, Json, extract::Path, http::StatusCode};
-use serde_json::Value;
 
 use crate::{
     model::{User, UserInfo},
@@ -25,19 +24,6 @@ pub async fn get_user_by_id(
         Err(e) => {
             eprintln!("{:?}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
-}
-
-pub async fn create_user(
-    service: Extension<UserService>,
-    Json(user): Json<UserInfo>,
-) -> StatusCode {
-    match service.create_user(user).await {
-        Ok(_) => StatusCode::OK,
-        Err(e) => {
-            eprintln!("{:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
         }
     }
 }
